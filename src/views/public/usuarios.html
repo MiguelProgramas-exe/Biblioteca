@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Usuários - Biblioteca</title>
+</head>
+<body>
+
+    <h1>Usuários</h1>
+
+    <a href="/">
+        <button>Voltar</button>
+    </a>
+
+    <hr>
+
+    <h2>Cadastrar Usuário</h2>
+
+    <input
+        type="text"
+        id="nome"
+        placeholder="Nome do usuário"
+    >
+
+    <button onclick="criarUsuario()">
+        Cadastrar
+    </button>
+
+    <hr>
+
+    <h2>Pesquisar Usuário</h2>
+
+    <input
+        type="number"
+        id="cpfPesquisa"
+        placeholder="CPF"
+    >
+
+    <button onclick="buscarUsuario()">
+        Pesquisar
+    </button>
+
+    <button onclick="listarUsuarios()">
+        Listar Todos
+    </button>
+
+    <div id="resultado"></div>
+
+    <script>
+
+        // Listar usuários
+        async function listarUsuarios() {
+
+            const resposta = await fetch('/usuarios/usuario');
+
+            const usuarios = await resposta.json();
+
+            mostrarUsuarios(usuarios);
+        }
+
+
+        // Mostrar usuários
+        function mostrarUsuarios(usuarios) {
+
+            const resultado = document.getElementById('resultado');
+
+            resultado.innerHTML = '<h2>Usuários cadastrados</h2>';
+
+            usuarios.forEach(usuario => {
+
+                resultado.innerHTML += `
+                    <div>
+                        <p>
+                            <strong>CPF:</strong> ${usuario.cpf}<br>
+                            <strong>Nome:</strong> ${usuario.nome}
+                        </p>
+
+                        <button onclick="editarUsuario(${usuario.cpf}, '${usuario.nome}')">
+                            Editar
+                        </button>
+
+                        <button onclick="deletarUsuario(${usuario.cpf})">
+                            Excluir
+                        </button>
+
+                        <hr>
+                    </div>
+                `;
+            });
+        }
+
+
+        // Pesquisar usuário
+        async function buscarUsuario() {
+
+            const cpf = document.getElementById('cpfPesquisa').value;
+
+            if (!cpf) {
+                alert('Digite um CPF.');
+                return;
+            }
+
+            const resposta = await fetch(
+                `/usuarios/usuario/${cpf}`
+            );
+
+            const resultado = document.getElementById('resultado');
+
+            if (!resposta.ok) {
+                resultado.innerHTML = '<p>Usuário não encontrado.</p>';
+                return;
+            }
+
+            const usuario = await resposta.json();
+
+            mostrarUsuarios([usuario]);
+        }
+
+
+        // Criar usuário
+        async function criarUsuario() {
+
+            const nome = document.getElementById('nome').value;
+
+            if (!nome) {
+                alert('Digite o nome.');
+                return;
+            }
+
+            const resposta = await fetch('/usuarios/usuario', {
+
+                method: 'POST',
+
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+
+                body: JSON.stringify({
+                    nome: nome
+                })
+            });
+
+            const usuario = await resposta.json();
+
+            alert(`Usuário ${usuario.nome} cadastrado!`);
+
+            document.getElementById('nome').value = '';
+
+            listarUsuarios();
+        }
+
+
+        // Editar usuário
+        async function editarUsuario(cpf, nomeAtual) {
+
+            const novoNome = prompt(
+                'Digite o novo nome:',
+                nomeAtual
+            );
+
+            if (!novoNome) {
+                return;
+            }
+
+            const resposta = await fetch(
+                `/usuarios/usuario/${cpf}`,
+                {
+                    method: 'PUT',
+
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+
+                    body: JSON.stringify({
+                        nome: novoNome
+                    })
+                }
+            );
+
+            if (resposta.ok) {
+
+                alert('Usuário atualizado!');
+
+                listarUsuarios();
+
+            } else {
+
+                alert('Erro ao atualizar usuário.');
+            }
+        }
+
+
+        // Excluir usuário
+        async function deletarUsuario(cpf) {
+
+            const confirmar = confirm(
+                'Deseja realmente excluir este usuário?'
+            );
+
+            if (!confirmar) {
+                return;
+            }
+
+            const resposta = await fetch(
+                `/usuarios/usuario/${cpf}`,
+                {
+                    method: 'DELETE'
+                }
+            );
+
+            if (resposta.ok) {
+
+                alert('Usuário excluído!');
+
+                listarUsuarios();
+
+            } else {
+
+                alert('Erro ao excluir usuário.');
+            }
+        }
+
+        // Carregar usuários ao abrir a página
+        listarUsuarios();
+
+    </script>
+
+</body>
+</html>

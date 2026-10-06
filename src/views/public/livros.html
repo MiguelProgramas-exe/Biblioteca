@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Livros - Biblioteca</title>
+</head>
+<body>
+
+    <h1>Livros</h1>
+
+    <a href="/">
+        <button>Voltar</button>
+    </a>
+
+    <hr>
+
+    <h2>Cadastrar Livro</h2>
+
+    <input
+        type="text"
+        id="titulo"
+        placeholder="Título"
+    >
+
+    <input
+        type="text"
+        id="autor"
+        placeholder="Autor"
+    >
+
+    <button onclick="criarLivro()">
+        Cadastrar
+    </button>
+
+    <hr>
+
+    <h2>Pesquisar Livro</h2>
+
+    <input
+        type="text"
+        id="tituloPesquisa"
+        placeholder="Pesquisar por título"
+    >
+
+    <button onclick="buscarTitulo()">
+        Buscar Título
+    </button>
+
+    <br><br>
+
+    <input
+        type="text"
+        id="autorPesquisa"
+        placeholder="Pesquisar por autor"
+    >
+
+    <button onclick="buscarAutor()">
+        Buscar Autor
+    </button>
+
+    <br><br>
+
+    <button onclick="listarLivros()">
+        Listar Todos
+    </button>
+
+    <div id="resultado"></div>
+
+
+    <script>
+
+        // Listar livros
+        async function listarLivros() {
+
+            const resposta = await fetch('/livros/livro');
+
+            const livros = await resposta.json();
+
+            mostrarLivros(livros);
+        }
+
+
+        // Mostrar livros
+        function mostrarLivros(livros) {
+
+            const resultado =
+                document.getElementById('resultado');
+
+            resultado.innerHTML = '<h2>Livros cadastrados</h2>';
+
+            livros.forEach(livro => {
+
+                resultado.innerHTML += `
+                    <div>
+
+                        <p>
+                            <strong>ISBN:</strong> ${livro.isbn}<br>
+
+                            <strong>Título:</strong> ${livro.titulo}<br>
+
+                            <strong>Autor:</strong> ${livro.autor}
+                        </p>
+
+                        <button onclick="editarLivro(
+                            ${livro.isbn},
+                            '${livro.titulo}',
+                            '${livro.autor}'
+                        )">
+                            Editar
+                        </button>
+
+                        <button onclick="deletarLivro(${livro.isbn})">
+                            Excluir
+                        </button>
+
+                        <hr>
+
+                    </div>
+                `;
+            });
+        }
+
+
+        // Buscar por título
+        async function buscarTitulo() {
+
+            const titulo =
+                document.getElementById('tituloPesquisa').value;
+
+            if (!titulo) {
+                alert('Digite um título.');
+                return;
+            }
+
+            const resposta = await fetch(
+                `/livros/livro/titulo/${encodeURIComponent(titulo)}`
+            );
+
+            const resultado =
+                document.getElementById('resultado');
+
+            if (!resposta.ok) {
+
+                resultado.innerHTML =
+                    '<p>Livro não encontrado.</p>';
+
+                return;
+            }
+
+            const livro = await resposta.json();
+
+            mostrarLivros([livro]);
+        }
+
+
+        // Buscar por autor
+        async function buscarAutor() {
+
+            const autor =
+                document.getElementById('autorPesquisa').value;
+
+            if (!autor) {
+                alert('Digite um autor.');
+                return;
+            }
+
+            const resposta = await fetch(
+                `/livros/livro/autor/${encodeURIComponent(autor)}`
+            );
+
+            const resultado =
+                document.getElementById('resultado');
+
+            if (!resposta.ok) {
+
+                resultado.innerHTML =
+                    '<p>Nenhum livro encontrado.</p>';
+
+                return;
+            }
+
+            const livros = await resposta.json();
+
+            mostrarLivros(livros);
+        }
+
+
+        // Criar livro
+        async function criarLivro() {
+
+            const titulo =
+                document.getElementById('titulo').value;
+
+            const autor =
+                document.getElementById('autor').value;
+
+            if (!titulo || !autor) {
+
+                alert('Preencha título e autor.');
+
+                return;
+            }
+
+            const resposta = await fetch(
+                '/livros/livro',
+                {
+                    method: 'POST',
+
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+
+                    body: JSON.stringify({
+                        titulo: titulo,
+                        autor: autor
+                    })
+                }
+            );
+
+            const livro = await resposta.json();
+
+            alert(`Livro "${livro.titulo}" cadastrado!`);
+
+            document.getElementById('titulo').value = '';
+            document.getElementById('autor').value = '';
+
+            listarLivros();
+        }
+
+
+        // Editar livro
+        async function editarLivro(
+            isbn,
+            tituloAtual,
+            autorAtual
+        ) {
+
+            const novoTitulo = prompt(
+                'Digite o novo título:',
+                tituloAtual
+            );
+
+            if (!novoTitulo) {
+                return;
+            }
+
+            const novoAutor = prompt(
+                'Digite o novo autor:',
+                autorAtual
+            );
+
+            if (!novoAutor) {
+                return;
+            }
+
+            const resposta = await fetch(
+                `/livros/livro/${isbn}`,
+                {
+                    method: 'PUT',
+
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+
+                    body: JSON.stringify({
+                        titulo: novoTitulo,
+                        autor: novoAutor
+                    })
+                }
+            );
+
+            if (resposta.ok) {
+
+                alert('Livro atualizado!');
+
+                listarLivros();
+
+            } else {
+
+                alert('Erro ao atualizar livro.');
+            }
+        }
+
+
+        // Excluir livro
+        async function deletarLivro(isbn) {
+
+            const confirmar = confirm(
+                'Deseja realmente excluir este livro?'
+            );
+
+            if (!confirmar) {
+                return;
+            }
+
+            const resposta = await fetch(
+                `/livros/livro/${isbn}`,
+                {
+                    method: 'DELETE'
+                }
+            );
+
+            if (resposta.ok) {
+
+                alert('Livro excluído!');
+
+                listarLivros();
+
+            } else {
+
+                alert('Erro ao excluir livro.');
+            }
+        }
+
+
+        // Carregar livros ao abrir a página
+        listarLivros();
+
+    </script>
+
+</body>
+</html>

@@ -1,24 +1,89 @@
-let tarefas = [
- { id: 2, titulo: 'Estudar', feita: 0},
+let livros = [
+    {
+        titulo: 'Dom Quixote',
+        isbn: 1,
+        autor: 'Miguel de Cervantes'
+    },
+    {
+        titulo: 'Memórias Póstumas',
+        isbn: 2,
+        autor: 'Machado de Assis'
+    },
+    {
+        titulo: 'O Cortiço',
+        isbn: 3,
+        autor: 'Aluísio Azevedo'
+    }
 ];
-// Funções para manipular as tarefas
-const getTodasTarefas = () => tarefas;
-const getTarefaId = (id) => tarefas.find(task => tarefas.id === id);
-const getFeitas = () => {
- return tarefas.find(item => item.feita === 1);
+
+// GET - Listar todos os livros
+const getTodosLivros = () => {
+    return livros;
 };
-const criarTarefa = (taskData) => {
- const newTask = {
- id: tarefas.length > 0 ? Math.max(...tarefas.map(t => t.id)) + 1 : 1,
- title: taskData.titulo,
- completed: taskData.feita || false
- };
- tarefas.push(newTask);
- return newTask;
+
+// GET - Buscar livro pelo título
+const getLivroTitulo = (titulo) => {
+    return livros.find(
+        livro => livro.titulo.toLowerCase() === titulo.toLowerCase()
+    );
 };
+
+// GET - Buscar livro pelo autor
+const getLivroAutor = (autor) => {
+    return livros.filter(
+        livro => livro.autor.toLowerCase() === autor.toLowerCase()
+    );
+};
+
+// POST - Criar livro
+const criarLivro = (livroData) => {
+    const novoLivro = {
+        isbn: livros.length > 0
+            ? Math.max(...livros.map(livro => livro.isbn)) + 1
+            : 1,
+        titulo: livroData.titulo,
+        autor: livroData.autor
+    };
+
+    livros.push(novoLivro);
+
+    return novoLivro;
+};
+
+// PUT - Editar livro
+const atualizarLivro = (isbn, livroData) => {
+    const livro = livros.find(
+        livro => livro.isbn === Number(isbn)
+    );
+
+    if (!livro) {
+        return null;
+    }
+
+    livro.titulo = livroData.titulo;
+    livro.autor = livroData.autor;
+
+    return livro;
+};
+
+// DELETE - Excluir livro
+const deletarLivro = (isbn) => {
+    const index = livros.findIndex(
+        livro => livro.isbn === Number(isbn)
+    );
+
+    if (index === -1) {
+        return null;
+    }
+
+    return livros.splice(index, 1)[0];
+};
+
 module.exports = {
- getTodasTarefas ,
- getTarefaId ,
- getFeitas ,
- criarTarefa
-}
+    getTodosLivros,
+    getLivroTitulo,
+    getLivroAutor,
+    criarLivro,
+    atualizarLivro,
+    deletarLivro
+};
